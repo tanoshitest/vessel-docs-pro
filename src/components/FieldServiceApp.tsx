@@ -322,7 +322,7 @@ function GeneralForm({
     onChange({ ...value, [k]: e.target.value });
 
   return (
-    <Card title="General Information" subtitle="Customer & vessel details">
+    <Card title="VNT COMPANY Information" subtitle="Customer & vessel details">
       <Field label="Company">
         <input className={inputCls} value={value.company} onChange={set("company")} />
       </Field>
