@@ -307,6 +307,26 @@ export function FieldServiceApp() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Print Preview Overlay */}
+      <AnimatePresence>
+        {preview && (
+          <motion.div
+            key="preview"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <PrintPreview
+              type={preview}
+              customer={customer}
+              equipments={equipments}
+              services={services}
+              onClose={() => setPreview(null)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
