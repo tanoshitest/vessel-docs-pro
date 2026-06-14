@@ -12,6 +12,8 @@ import {
   ChevronRight,
   Anchor,
   FileText,
+  Menu,
+  X,
 } from "lucide-react";
 import {
   exportBienBanKiemTra,
@@ -23,11 +25,11 @@ import {
 
 type TabKey = "general" | "equipment" | "service" | "export";
 
-const TABS: { key: TabKey; label: string; icon: typeof Ship }[] = [
-  { key: "general", label: "General", icon: ClipboardList },
-  { key: "equipment", label: "Equipment", icon: Anchor },
-  { key: "service", label: "Services", icon: Wrench },
-  { key: "export", label: "Export", icon: FileDown },
+const TABS: { key: TabKey; label: string; icon: typeof Ship; hint: string }[] = [
+  { key: "general", label: "General", icon: ClipboardList, hint: "Customer & vessel" },
+  { key: "equipment", label: "Equipment", icon: Anchor, hint: "Biên bản kiểm tra" },
+  { key: "service", label: "Services", icon: Wrench, hint: "Biên bản nghiệm thu" },
+  { key: "export", label: "Export", icon: FileDown, hint: "Generate PDFs" },
 ];
 
 // ---- Mock pre-fill data ----
@@ -64,15 +66,18 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 
 export function FieldServiceApp() {
   const [tab, setTab] = useState<TabKey>("general");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [customer, setCustomer] = useState<CustomerInfo>(INITIAL_CUSTOMER);
   const [equipments, setEquipments] = useState<Equipment[]>(INITIAL_EQUIPMENTS);
   const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
   const [exporting, setExporting] = useState<"kt" | "nt" | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
+  const currentTab = TABS.find((t) => t.key === tab)!;
+  const currentIdx = TABS.findIndex((t) => t.key === tab);
+
   const goTab = (dir: 1 | -1) => {
-    const idx = TABS.findIndex((t) => t.key === tab);
-    const next = TABS[Math.min(TABS.length - 1, Math.max(0, idx + dir))];
+    const next = TABS[Math.min(TABS.length - 1, Math.max(0, currentIdx + dir))];
     if (next) setTab(next.key);
   };
 
@@ -96,47 +101,125 @@ export function FieldServiceApp() {
     }
   };
 
+  const CurrentIcon = currentTab.icon;
+
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-slate-900">
       {/* ---------- Header ---------- */}
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white">
-              <Ship className="h-5 w-5" />
+      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto grid max-w-3xl grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
+              <CurrentIcon className="h-5 w-5" />
             </div>
-            <div className="leading-tight">
-              <div className="text-sm font-semibold tracking-tight">Field Service</div>
-              <div className="text-[11px] text-slate-500">Marine Radio Inspection</div>
+            <div className="min-w-0 leading-tight">
+              <div className="truncate text-sm font-semibold tracking-tight">
+                {currentTab.label}
+              </div>
+              <div className="truncate text-[11px] text-slate-500">{currentTab.hint}</div>
             </div>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
-            Job · {customer.jobNumber}
+          <div className="shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+            {customer.jobNumber}
           </div>
         </div>
-
-        {/* ---------- Tabs ---------- */}
-        <nav className="mx-auto flex max-w-3xl gap-1 overflow-x-auto px-2 pb-2">
-          {TABS.map((t) => {
-            const Icon = t.icon;
-            const active = tab === t.key;
-            return (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                className={`relative flex flex-1 min-w-[88px] items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  active
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{t.label}</span>
-              </button>
-            );
-          })}
-        </nav>
       </header>
+
+      {/* ---------- Drawer menu ---------- */}
+      <AnimatePresence>
+        {menuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMenuOpen(false)}
+              className="fixed inset-0 z-30 bg-slate-900/40 backdrop-blur-sm"
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 32 }}
+              className="fixed inset-y-0 left-0 z-40 flex w-[82%] max-w-xs flex-col bg-white shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-slate-200 px-4 py-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white">
+                    <Ship className="h-5 w-5" />
+                  </div>
+                  <div className="leading-tight">
+                    <div className="text-sm font-semibold">Field Service</div>
+                    <div className="text-[11px] text-slate-500">Marine Radio Inspection</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setMenuOpen(false)}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                  aria-label="Close menu"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <nav className="flex-1 space-y-1 p-3">
+                {TABS.map((t, i) => {
+                  const Icon = t.icon;
+                  const active = tab === t.key;
+                  return (
+                    <button
+                      key={t.key}
+                      onClick={() => {
+                        setTab(t.key);
+                        setMenuOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition ${
+                        active
+                          ? "bg-slate-900 text-white"
+                          : "text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      <div
+                        className={`flex h-9 w-9 items-center justify-center rounded-lg ${
+                          active ? "bg-white/15" : "bg-slate-100"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold">{t.label}</div>
+                        <div
+                          className={`truncate text-[11px] ${
+                            active ? "text-white/70" : "text-slate-500"
+                          }`}
+                        >
+                          {t.hint}
+                        </div>
+                      </div>
+                      <div
+                        className={`text-[11px] font-medium ${
+                          active ? "text-white/70" : "text-slate-400"
+                        }`}
+                      >
+                        {i + 1}/{TABS.length}
+                      </div>
+                    </button>
+                  );
+                })}
+              </nav>
+              <div className="border-t border-slate-200 p-4 text-[11px] text-slate-500">
+                Job · <span className="font-semibold text-slate-700">{customer.jobNumber}</span>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ---------- Body ---------- */}
       <main className="mx-auto max-w-3xl px-4 py-5 pb-28">
@@ -152,14 +235,14 @@ export function FieldServiceApp() {
               <GeneralForm value={customer} onChange={setCustomer} />
             )}
             {tab === "equipment" && (
-              <EquipmentTable
+              <EquipmentList
                 items={equipments}
                 onChange={setEquipments}
                 makeNew={() => ({ id: uid(), type: "", maker: "", model: "", serial: "" })}
               />
             )}
             {tab === "service" && (
-              <ServiceTable
+              <ServiceList
                 items={services}
                 onChange={setServices}
                 makeNew={() => ({ id: uid(), description: "", quantity: "01", unit: "Lần" })}
@@ -241,11 +324,7 @@ function GeneralForm({
   return (
     <Card title="General Information" subtitle="Customer & vessel details">
       <Field label="Company">
-        <input
-          className={inputCls}
-          value={value.company}
-          onChange={set("company")}
-        />
+        <input className={inputCls} value={value.company} onChange={set("company")} />
       </Field>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Vessel">
@@ -270,9 +349,9 @@ function GeneralForm({
 }
 
 /* =========================================================================
-   Equipment grid (Google-Sheets style)
+   Equipment list — stacked cards (mobile-friendly, all fields visible)
    ========================================================================= */
-function EquipmentTable({
+function EquipmentList({
   items,
   onChange,
   makeNew,
@@ -295,73 +374,68 @@ function EquipmentTable({
           onClick={add}
           className="inline-flex items-center gap-1 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white"
         >
-          <Plus className="h-3.5 w-3.5" /> Add row
+          <Plus className="h-3.5 w-3.5" /> Add
         </button>
       }
     >
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
-        <div className="min-w-[640px]">
-          <div className="grid grid-cols-[40px_120px_140px_140px_140px_44px] border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <Cell>#</Cell>
-            <Cell>Type</Cell>
-            <Cell>Maker</Cell>
-            <Cell>Model</Cell>
-            <Cell>Serial</Cell>
-            <Cell />
-          </div>
-          <AnimatePresence initial={false}>
-            {items.map((eq, i) => (
-              <motion.div
-                key={eq.id}
-                layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ type: "spring", stiffness: 320, damping: 30 }}
-                className="grid grid-cols-[40px_120px_140px_140px_140px_44px] border-b border-slate-100 last:border-0"
-              >
-                <Cell muted>{i + 1}</Cell>
-                <GridInput
-                  value={eq.type}
-                  onChange={(v) => update(eq.id, { type: v })}
-                />
-                <GridInput
-                  value={eq.maker}
-                  onChange={(v) => update(eq.id, { maker: v })}
-                />
-                <GridInput
-                  value={eq.model}
-                  onChange={(v) => update(eq.id, { model: v })}
-                />
-                <GridInput
-                  value={eq.serial}
-                  onChange={(v) => update(eq.id, { serial: v })}
-                />
+      <div className="space-y-3">
+        <AnimatePresence initial={false}>
+          {items.map((eq, i) => (
+            <motion.div
+              key={eq.id}
+              layout
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 text-[11px] font-semibold text-white">
+                    {i + 1}
+                  </span>
+                  <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Equipment
+                  </span>
+                </div>
                 <button
                   onClick={() => remove(eq.id)}
-                  className="flex items-center justify-center text-slate-400 hover:text-red-600"
-                  aria-label="Delete row"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"
+                  aria-label="Delete"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {items.length === 0 && (
-            <div className="px-3 py-6 text-center text-sm text-slate-500">
-              No equipment yet — tap "Add row".
-            </div>
-          )}
-        </div>
+              </div>
+              <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                <StackField label="Type" value={eq.type} onChange={(v) => update(eq.id, { type: v })} />
+                <StackField label="Maker" value={eq.maker} onChange={(v) => update(eq.id, { maker: v })} />
+                <StackField label="Model" value={eq.model} onChange={(v) => update(eq.id, { model: v })} />
+                <StackField label="Serial" value={eq.serial} onChange={(v) => update(eq.id, { serial: v })} />
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {items.length === 0 && (
+          <div className="rounded-xl border border-dashed border-slate-200 px-3 py-8 text-center text-sm text-slate-500">
+            No equipment yet — tap "Add".
+          </div>
+        )}
+        <button
+          onClick={add}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-white py-3 text-sm font-medium text-slate-600 hover:border-slate-400 hover:bg-slate-50"
+        >
+          <Plus className="h-4 w-4" /> Add equipment
+        </button>
       </div>
     </Card>
   );
 }
 
 /* =========================================================================
-   Service grid
+   Service list — stacked cards
    ========================================================================= */
-function ServiceTable({
+function ServiceList({
   items,
   onChange,
   makeNew,
@@ -384,59 +458,73 @@ function ServiceTable({
           onClick={add}
           className="inline-flex items-center gap-1 rounded-md bg-slate-900 px-3 py-1.5 text-xs font-medium text-white"
         >
-          <Plus className="h-3.5 w-3.5" /> Add row
+          <Plus className="h-3.5 w-3.5" /> Add
         </button>
       }
     >
-      <div className="overflow-x-auto rounded-lg border border-slate-200">
-        <div className="min-w-[640px]">
-          <div className="grid grid-cols-[40px_1fr_70px_70px_44px] border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            <Cell>#</Cell>
-            <Cell>Description</Cell>
-            <Cell>Qty</Cell>
-            <Cell>Unit</Cell>
-            <Cell />
-          </div>
-          <AnimatePresence initial={false}>
-            {items.map((s, i) => (
-              <motion.div
-                key={s.id}
-                layout
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ type: "spring", stiffness: 320, damping: 30 }}
-                className="grid grid-cols-[40px_1fr_70px_70px_44px] border-b border-slate-100 last:border-0"
-              >
-                <Cell muted>{i + 1}</Cell>
-                <GridInput
-                  value={s.description}
-                  onChange={(v) => update(s.id, { description: v })}
-                />
-                <GridInput
-                  value={s.quantity}
-                  onChange={(v) => update(s.id, { quantity: v })}
-                />
-                <GridInput
-                  value={s.unit}
-                  onChange={(v) => update(s.id, { unit: v })}
-                />
+      <div className="space-y-3">
+        <AnimatePresence initial={false}>
+          {items.map((s, i) => (
+            <motion.div
+              key={s.id}
+              layout
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+            >
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 text-[11px] font-semibold text-white">
+                    {i + 1}
+                  </span>
+                  <span className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                    Service
+                  </span>
+                </div>
                 <button
                   onClick={() => remove(s.id)}
-                  className="flex items-center justify-center text-slate-400 hover:text-red-600"
-                  aria-label="Delete row"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:bg-red-50 hover:text-red-600"
+                  aria-label="Delete"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {items.length === 0 && (
-            <div className="px-3 py-6 text-center text-sm text-slate-500">
-              No services yet — tap "Add row".
-            </div>
-          )}
-        </div>
+              </div>
+              <div className="space-y-2.5">
+                <StackField
+                  label="Description"
+                  value={s.description}
+                  onChange={(v) => update(s.id, { description: v })}
+                  multiline
+                />
+                <div className="grid grid-cols-2 gap-2.5">
+                  <StackField
+                    label="Quantity"
+                    value={s.quantity}
+                    onChange={(v) => update(s.id, { quantity: v })}
+                  />
+                  <StackField
+                    label="Unit"
+                    value={s.unit}
+                    onChange={(v) => update(s.id, { unit: v })}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {items.length === 0 && (
+          <div className="rounded-xl border border-dashed border-slate-200 px-3 py-8 text-center text-sm text-slate-500">
+            No services yet — tap "Add".
+          </div>
+        )}
+        <button
+          onClick={add}
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-slate-300 bg-white py-3 text-sm font-medium text-slate-600 hover:border-slate-400 hover:bg-slate-50"
+        >
+          <Plus className="h-4 w-4" /> Add service
+        </button>
       </div>
     </Card>
   );
@@ -519,11 +607,11 @@ function ExportButton({
           <FileText className="h-5 w-5" />
         )}
       </div>
-      <div className="flex-1">
-        <div className="text-sm font-semibold text-slate-900">{title}</div>
-        <div className="text-xs text-slate-500">{subtitle}</div>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-semibold text-slate-900">{title}</div>
+        <div className="truncate text-xs text-slate-500">{subtitle}</div>
       </div>
-      <FileDown className="mt-1 h-4 w-4 text-slate-400 transition group-hover:text-slate-700" />
+      <FileDown className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-slate-700" />
     </motion.button>
   );
 }
@@ -548,9 +636,11 @@ function Card({
   return (
     <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight text-slate-900">{title}</h2>
-          {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+        <div className="min-w-0">
+          <h2 className="truncate text-base font-semibold tracking-tight text-slate-900">
+            {title}
+          </h2>
+          {subtitle && <p className="truncate text-xs text-slate-500">{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -570,31 +660,37 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Cell({ children, muted }: { children?: React.ReactNode; muted?: boolean }) {
-  return (
-    <div
-      className={`flex items-center border-r border-slate-200 px-3 py-2.5 text-sm last:border-r-0 ${
-        muted ? "text-slate-400" : ""
-      }`}
-    >
-      {children}
-    </div>
-  );
-}
-
-function GridInput({
+function StackField({
+  label,
   value,
   onChange,
+  multiline,
 }: {
+  label: string;
   value: string;
   onChange: (v: string) => void;
+  multiline?: boolean;
 }) {
   return (
-    <input
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full border-r border-slate-200 bg-transparent px-3 py-2.5 text-sm text-slate-900 outline-none focus:bg-slate-50 last:border-r-0"
-    />
+    <label className="block space-y-1">
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+        {label}
+      </span>
+      {multiline ? (
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={3}
+          className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/10"
+        />
+      ) : (
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-900 outline-none transition focus:border-slate-900 focus:bg-white focus:ring-2 focus:ring-slate-900/10"
+        />
+      )}
+    </label>
   );
 }
 
