@@ -14,6 +14,7 @@ import {
   FileText,
   Menu,
   X,
+  Printer,
 } from "lucide-react";
 import {
   exportBienBanKiemTra,
@@ -22,6 +23,7 @@ import {
   type Equipment,
   type ServiceItem,
 } from "@/lib/pdfExport";
+import { PrintPreview } from "./PrintPreview";
 
 type TabKey = "general" | "equipment" | "service" | "export";
 
