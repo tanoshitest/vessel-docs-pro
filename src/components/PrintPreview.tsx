@@ -54,7 +54,7 @@ export function PrintPreview({
         </div>
       </div>
 
-      onboarding      {/* Document area */}
+      {/* Document area */}
       <div className="flex-1 overflow-y-auto bg-slate-100 p-4 sm:p-8">
         <div className="mx-auto max-w-[210mm] bg-white p-8 shadow-sm sm:p-[20mm]">
           {/* Header */}
