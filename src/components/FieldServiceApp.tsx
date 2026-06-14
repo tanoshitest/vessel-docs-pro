@@ -73,6 +73,7 @@ export function FieldServiceApp() {
   const [equipments, setEquipments] = useState<Equipment[]>(INITIAL_EQUIPMENTS);
   const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
   const [exporting, setExporting] = useState<"kt" | "nt" | null>(null);
+  const [preview, setPreview] = useState<"kt" | "nt" | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const currentTab = TABS.find((t) => t.key === tab)!;
