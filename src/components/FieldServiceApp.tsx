@@ -255,6 +255,7 @@ export function FieldServiceApp() {
               <ExportPanel
                 exporting={exporting}
                 onExport={handleExport}
+                onPreview={setPreview}
                 customer={customer}
                 equipmentCount={equipments.length}
                 serviceCount={services.length}
