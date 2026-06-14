@@ -14,6 +14,7 @@ import {
   FileText,
   Menu,
   X,
+  Printer,
 } from "lucide-react";
 import {
   exportBienBanKiemTra,
@@ -22,6 +23,7 @@ import {
   type Equipment,
   type ServiceItem,
 } from "@/lib/pdfExport";
+import { PrintPreview } from "./PrintPreview";
 
 type TabKey = "general" | "equipment" | "service" | "export";
 
@@ -71,6 +73,7 @@ export function FieldServiceApp() {
   const [equipments, setEquipments] = useState<Equipment[]>(INITIAL_EQUIPMENTS);
   const [services, setServices] = useState<ServiceItem[]>(INITIAL_SERVICES);
   const [exporting, setExporting] = useState<"kt" | "nt" | null>(null);
+  const [preview, setPreview] = useState<"kt" | "nt" | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const currentTab = TABS.find((t) => t.key === tab)!;
@@ -252,6 +255,7 @@ export function FieldServiceApp() {
               <ExportPanel
                 exporting={exporting}
                 onExport={handleExport}
+                onPreview={setPreview}
                 customer={customer}
                 equipmentCount={equipments.length}
                 serviceCount={services.length}
@@ -301,6 +305,26 @@ export function FieldServiceApp() {
             className="fixed bottom-24 left-1/2 z-30 -translate-x-1/2 rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-lg"
           >
             {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Print Preview Overlay */}
+      <AnimatePresence>
+        {preview && (
+          <motion.div
+            key="preview"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <PrintPreview
+              type={preview}
+              customer={customer}
+              equipments={equipments}
+              services={services}
+              onClose={() => setPreview(null)}
+            />
           </motion.div>
         )}
       </AnimatePresence>
@@ -536,12 +560,14 @@ function ServiceList({
 function ExportPanel({
   exporting,
   onExport,
+  onPreview,
   customer,
   equipmentCount,
   serviceCount,
 }: {
   exporting: "kt" | "nt" | null;
   onExport: (which: "kt" | "nt") => void;
+  onPreview: (which: "kt" | "nt") => void;
   customer: CustomerInfo;
   equipmentCount: number;
   serviceCount: number;
@@ -555,17 +581,19 @@ function ExportPanel({
         <Summary label="Services" value={`${serviceCount} item${serviceCount === 1 ? "" : "s"}`} />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <ExportButton
+      <div className="space-y-3">
+        <ReportAction
           loading={exporting === "kt"}
-          onClick={() => onExport("kt")}
-          title="In Biên Bản Kiểm Tra"
+          onExport={() => onExport("kt")}
+          onPreview={() => onPreview("kt")}
+          title="Biên Bản Kiểm Tra"
           subtitle="Inspection record · equipment list"
         />
-        <ExportButton
+        <ReportAction
           loading={exporting === "nt"}
-          onClick={() => onExport("nt")}
-          title="In Biên Bản Nghiệm Thu"
+          onExport={() => onExport("nt")}
+          onPreview={() => onPreview("nt")}
+          title="Biên Bản Nghiệm Thu"
           subtitle="Service acceptance · works performed"
         />
       </div>
@@ -575,6 +603,59 @@ function ExportPanel({
         If a template is missing, a blank A4 fallback is used so you can validate the data flow.
       </p>
     </Card>
+  );
+}
+
+function ReportAction({
+  loading,
+  onExport,
+  onPreview,
+  title,
+  subtitle,
+}: {
+  loading: boolean;
+  onExport: () => void;
+  onPreview: () => void;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white">
+          {loading ? (
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+              className="h-4 w-4 rounded-full border-2 border-white/40 border-t-white"
+            />
+          ) : (
+            <FileText className="h-5 w-5" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-slate-900">{title}</div>
+          <div className="truncate text-xs text-slate-500">{subtitle}</div>
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onPreview}
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2.5 text-sm font-medium text-white"
+        >
+          <Printer className="h-4 w-4" /> Xem & In
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={onExport}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+        >
+          <FileDown className="h-4 w-4" /> Tải PDF
+        </motion.button>
+      </div>
+    </div>
   );
 }
 

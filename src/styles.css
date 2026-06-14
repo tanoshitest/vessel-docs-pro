@@ -1,4 +1,30 @@
 @import "tailwindcss" source(none);
+
+/* Print styles — hide app UI, show only the document */
+@media print {
+  .no-print,
+  .no-print * {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-preview {
+    position: static !important;
+    overflow: visible !important;
+  }
+  .print-preview > div:last-child {
+    background: white !important;
+    padding: 0 !important;
+  }
+  .print-preview .max-w-\[210mm\] {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    padding: 10mm !important;
+  }
+}
 @source "../src";
 @import "tw-animate-css";
 
