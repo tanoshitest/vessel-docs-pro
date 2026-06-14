@@ -26,7 +26,7 @@ import {
 type TabKey = "general" | "equipment" | "service" | "export";
 
 const TABS: { key: TabKey; label: string; icon: typeof Ship; hint: string }[] = [
-  { key: "general", label: "General", icon: ClipboardList, hint: "Customer & vessel" },
+  { key: "general", label: "VNT COMPANY", icon: ClipboardList, hint: "Customer & vessel" },
   { key: "equipment", label: "Equipment", icon: Anchor, hint: "Biên bản kiểm tra" },
   { key: "service", label: "Services", icon: Wrench, hint: "Biên bản nghiệm thu" },
   { key: "export", label: "Export", icon: FileDown, hint: "Generate PDFs" },
